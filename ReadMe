@@ -1,0 +1,68 @@
+Name: Parnasi Chandrakant Meher
+Email Address: pmeher@binghamton.edu
+
+Programming language used: Java
+
+I am generating public private keys inside code and passing them to client while connection.
+
+Code for Encryption/Decryption:
+	public static String encryptTextUsingAES(String plainText, String aesKeyString) throws Exception {
+        byte[] decodedKey = Base64.getDecoder().decode(aesKeyString);
+        SecretKey originalKey = new SecretKeySpec(decodedKey, 0, decodedKey.length, "AES");
+        Cipher aesCipher = Cipher.getInstance("AES");
+        aesCipher.init(Cipher.ENCRYPT_MODE, originalKey);
+        byte[] byteCipherText = aesCipher.doFinal(plainText.getBytes());
+        return Base64.getEncoder().encodeToString(byteCipherText);
+    }
+ 
+    public static String decryptTextUsingAES(String encryptedText, String aesKeyString) throws Exception {
+ 
+        byte[] decodedKey = Base64.getDecoder().decode(aesKeyString);
+        SecretKey originalKey = new SecretKeySpec(decodedKey, 0, decodedKey.length, "AES");
+ 
+        Cipher aesCipher = Cipher.getInstance("AES");
+        aesCipher.init(Cipher.DECRYPT_MODE, originalKey);
+        byte[] bytePlainText = aesCipher.doFinal(Base64.getDecoder().decode(encryptedText));
+        return new String(bytePlainText);
+    }
+	
+	public static String decryptAESKey(String encryptedAESKey, PrivateKey privateKey) throws Exception {
+        Cipher cipher = Cipher.getInstance("RSA");
+        cipher.init(Cipher.DECRYPT_MODE, privateKey);
+        return new String(cipher.doFinal(Base64.getDecoder().decode(encryptedAESKey)));
+    }
+ 
+    public static String encryptAESKey(String plainAESKey, PublicKey publicKey) throws Exception {
+        Cipher cipher = Cipher.getInstance("RSA");
+        cipher.init(Cipher.ENCRYPT_MODE, publicKey);
+        return Base64.getEncoder().encodeToString(cipher.doFinal(plainAESKey.getBytes()));
+    }
+   
+Code was tested on remote.cs.binghamton.edu
+
+I have already added the certificate but if any issue arises new certificate can be added by below commands:
+On server machine:
+1)keytool -genkey -alias server-alias -keyalg RSA -keypass changeit -storepass changeit -keystore keystore.jks
+
+2)keytool -importkeystore -srckeystore keystore.jks -destkeystore keystore.jks -deststoretype pkcs12
+
+3)keytool -export -alias server-alias -storepass changeit -file server.cer -keystore keystore.jks
+
+On client machine:
+1)keytool -import -v -trustcacerts -alias server-alias -file server.cer -keystore cacerts.jks -keypass changeit -storepass changeit
+
+Command to Compile programs: 
+make
+
+Command to execute server program: 
+java -Djavax.net.ssl.keyStore=keystore.jks -Djavax.net.ssl.keyStorePassword=changeit BankServer <server_port>
+
+- server_port: port at which the SSH server accepts connection requests
+
+Command to execute client program: 
+java -Djavax.net.ssl.trustStore=cacerts.jks -Djavax.net.ssl.trustStorePassword=changeit UserClient <server_domain> <server_port>
+
+- server_domain: The domain name is the name of the machine on which the server is running. After you log into remote.cs.binghamton.edu, it will show “remote01:~>”, “remote02:~>” etc. If the server runs on remote01, then the domain name of the server is remote01.cs.binghamton.edu.
+
+- server_port: port number of the server
+
